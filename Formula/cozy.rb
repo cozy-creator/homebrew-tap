@@ -1,37 +1,37 @@
 class Cozy < Formula
   desc "One binary: the cozy CLI, Calcifer, TensorD and TensorFS"
   homepage "https://github.com/cozy-creator/cozy-creator"
-  version "0.11.13"
+  version "0.11.14"
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.13/cozy-aarch64-apple-darwin.tar.gz"
-      sha256 "0b40c578d154fc89edf75864c27f86c0190e188bb4db39e0604b609b992533f4"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.14/cozy-aarch64-apple-darwin.tar.gz"
+      sha256 "150e3606a9793aa2d8aa5f3c3946109aa637527ebeb36f4e5b5ae8f0d8a675b6"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.13/cozy-x86_64-apple-darwin.tar.gz"
-      sha256 "17f224e21edd949823ce243da1d7c5d46999c020efe79a873ae48841223bfba2"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.14/cozy-x86_64-apple-darwin.tar.gz"
+      sha256 "b5b7be12b9cf661ffee8ab816441a98aa5e04f407f6cf56ccfb32efc6115c363"
     end
   end
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.13/cozy-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "0196212f34e385b7bb668bf0c226c26006f072c8945d8dff107af98a0e9e6e3e"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.14/cozy-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "90d0156162b2f4bfd4f89d26190899d897a2fc959d67ef5b3a9d6c30de79c0b1"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.13/cozy-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "8bff1bf8ba2c212ce0aa5f75e4e0eef713d5fabaedf464c1c568bd6e86920182"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.14/cozy-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "430141af71cf6850c9898c00251142b41afe2ae869d4d2316b3a52884496ac98"
     end
   end
   license "MIT"
 
   BINARY_ALIASES = {
-    "aarch64-apple-darwin": {},
-    "aarch64-pc-windows-gnu": {},
+    "aarch64-apple-darwin":      {},
+    "aarch64-pc-windows-gnu":    {},
     "aarch64-unknown-linux-gnu": {},
-    "x86_64-apple-darwin": {},
-    "x86_64-pc-windows-gnu": {},
-    "x86_64-unknown-linux-gnu": {}
-  }
+    "x86_64-apple-darwin":       {},
+    "x86_64-pc-windows-gnu":     {},
+    "x86_64-unknown-linux-gnu":  {},
+  }.freeze
 
   def target_triple
     cpu = Hardware::CPU.arm? ? "aarch64" : "x86_64"
