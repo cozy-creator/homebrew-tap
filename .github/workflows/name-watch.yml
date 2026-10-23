@@ -20,14 +20,18 @@ jobs:
           found=()
           for file in homebrew-core/Formula/c/cozy.rb homebrew-core/Aliases/cozy homebrew-cask/Casks/c/cozy.rb; do
             repo=Homebrew/${file%%/*} path=${file#*/}
-            if gh api "repos/$repo/contents/$path" --silent 2>/dev/null; then
+            # Only a 404 is absence; any other failure fails the run.
+            if out=$(gh api "repos/$repo/contents/$path" --silent 2>&1); then
               found+=("https://github.com/$repo/blob/HEAD/$path")
+            elif [[ $out != *"HTTP 404"* ]]; then
+              echo "$out"; exit 1
             fi
           done
           for repo in Homebrew/homebrew-core Homebrew/homebrew-cask; do
-            while IFS= read -r line; do found+=("$line"); done < <(gh api -X GET search/issues \
-              -f q="repo:$repo is:pr in:title cozy" -f per_page=100 \
-              -q '.items[] | select(.title | test("^cozy([ :]|$)"; "i")) | "\(.html_url) \(.title)"')
+            json=$(gh api -X GET search/issues -f q="repo:$repo is:pr in:title cozy" -f per_page=100)
+            echo "$repo: $(jq .total_count <<<"$json") PRs with cozy in the title"
+            while IFS= read -r line; do found+=("$line"); done < <(jq -r \
+              '.items[] | select(.title | test("^cozy([ :]|$)"; "i")) | "\(.html_url) \(.title)"' <<<"$json")
           done
           gh issue list -R "$GITHUB_REPOSITORY" --state all --limit 1000 --json title -q '.[].title' > seen.txt
           for item in "${found[@]}"; do
