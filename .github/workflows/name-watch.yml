@@ -1,0 +1,39 @@
+name: name-watch
+# Weekly: anyone proposing a `cozy` formula or cask (a homebrew-core or homebrew-cask PR titled `cozy …`,
+# or the file itself) gets an issue here, once.
+on:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: |
+          found=()
+          for file in homebrew-core/Formula/c/cozy.rb homebrew-core/Aliases/cozy homebrew-cask/Casks/c/cozy.rb; do
+            repo=Homebrew/${file%%/*} path=${file#*/}
+            if gh api "repos/$repo/contents/$path" --silent 2>/dev/null; then
+              found+=("https://github.com/$repo/blob/HEAD/$path")
+            fi
+          done
+          for repo in Homebrew/homebrew-core Homebrew/homebrew-cask; do
+            while IFS= read -r line; do found+=("$line"); done < <(gh api -X GET search/issues \
+              -f q="repo:$repo is:pr in:title cozy" -f per_page=100 \
+              -q '.items[] | select(.title | test("^cozy([ :]|$)"; "i")) | "\(.html_url) \(.title)"')
+          done
+          gh issue list -R "$GITHUB_REPOSITORY" --state all --limit 1000 --json title -q '.[].title' > seen.txt
+          for item in "${found[@]}"; do
+            title="cozy in Homebrew: $item"
+            echo "$title"
+            grep -qxF "$title" seen.txt && continue
+            gh issue create -R "$GITHUB_REPOSITORY" --title "$title" \
+              --body "Someone may be taking the name \`cozy\` in Homebrew: $item (cc @PaulFidika)"
+          done

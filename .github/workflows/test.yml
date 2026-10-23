@@ -1,0 +1,108 @@
+name: test
+# Real installs on GitHub's runners: the tap's formula (prebuilt release), and the homebrew-core
+# formula built from source and audited as a new submission. `head` also builds master and checks
+# cozy's Homebrew behaviour: `cozy update` defers to brew; Calcifer runs `$(brew --prefix)/bin/cozy`.
+on:
+  push:
+    branches: [main]
+    paths: [Formula/**, homebrew-core/**, .github/workflows/test.yml]
+  workflow_dispatch:
+    inputs:
+      head:
+        description: Also build master (--HEAD) and check its Homebrew behaviour
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  tap:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15-intel, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: brew on PATH (Linuxbrew)
+        if: runner.os == 'Linux'
+        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+      - run: brew install cozy-creator/tap/cozy
+      - run: |
+          command -v cozy
+          cozy --version
+          cozy --help
+      - name: cozy update leaves Homebrew's cozy to brew
+        run: |
+          bin="$(brew --prefix)/bin/cozy"
+          before=$(shasum -a 256 < "$bin")
+          out=$(cozy update 2>&1) || true
+          echo "$out"
+          test "$before" = "$(shasum -a 256 < "$bin")"
+          case "$out" in
+            *"next: brew upgrade cozy"*) ;;
+            # 0.11.13 predates the hint (cl-645); it is the newest release, so it replaces nothing.
+            *"is the newest release"*) test "$(cozy --version)" = "cozy 0.11.13" ;;
+            *) exit 1 ;;
+          esac
+
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15-intel, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: brew on PATH (Linuxbrew)
+        if: runner.os == 'Linux'
+        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+      - name: The core formula in a local tap
+        run: |
+          brew tap-new --no-git cozy-creator/core-check
+          cp homebrew-core/cozy.rb "$(brew --repository cozy-creator/core-check)/Formula/"
+      - run: brew install --build-from-source cozy-creator/core-check/cozy
+      - run: brew test cozy-creator/core-check/cozy
+      - run: brew livecheck cozy-creator/core-check/cozy
+      - name: brew audit --new --strict --online (notability is the only problem allowed)
+        run: |
+          brew audit --new --strict --online cozy-creator/core-check/cozy 2>&1 | tee audit.txt || true
+          if grep -E '^\s+\* ' audit.txt | grep -v 'not notable enough'; then exit 1; fi
+
+  head:
+    if: inputs.head
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15-intel, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: brew on PATH (Linuxbrew)
+        if: runner.os == 'Linux'
+        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+      - run: |
+          brew tap-new --no-git cozy-creator/core-check
+          cp homebrew-core/cozy.rb "$(brew --repository cozy-creator/core-check)/Formula/"
+          brew install --HEAD cozy-creator/core-check/cozy
+          cozy --version
+      - name: cozy update names brew upgrade and replaces nothing
+        run: |
+          bin="$(brew --prefix)/bin/cozy"
+          before=$(shasum -a 256 < "$bin")
+          out=$(cozy update 2>&1) && exit 1
+          echo "$out"
+          test "$before" = "$(shasum -a 256 < "$bin")"
+          case "$out" in *"next: brew upgrade cozy"*) ;; *) exit 1 ;; esac
+      - name: Calcifer runs $(brew --prefix)/bin/cozy, never the Cellar keg
+        run: |
+          cozy up
+          stable="$(brew --prefix)/bin/cozy"
+          test "$(cat ~/.cozy/installed)" = "$stable"
+          for unit in ~/Library/LaunchAgents/com.cozy-creator.calcifer.plist ~/.cozy/services/cozy-calcifer.service; do
+            [ -f "$unit" ] || continue
+            cat "$unit"
+            grep -qF "$stable" "$unit"
+            if grep -q Cellar "$unit"; then exit 1; fi
+          done
+          cozy down
