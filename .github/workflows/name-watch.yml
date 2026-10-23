@@ -1,6 +1,6 @@
 name: name-watch
-# Weekly: anyone proposing a `cozy` formula or cask (a homebrew-core or homebrew-cask PR titled `cozy …`,
-# or the file itself) gets an issue here, once.
+# Weekly: anyone proposing a `cozy` formula or cask (an open homebrew-core or homebrew-cask PR titled
+# `cozy …`, or the file itself) gets an issue here, once.
 on:
   schedule:
     - cron: "17 9 * * 1"
@@ -27,11 +27,12 @@ jobs:
               echo "$out"; exit 1
             fi
           done
+          # Every open PR, listed: search with this job's token sees nothing outside this repo.
           for repo in Homebrew/homebrew-core Homebrew/homebrew-cask; do
-            json=$(gh api -X GET search/issues -f q="repo:$repo is:pr in:title cozy" -f per_page=100)
-            echo "$repo: $(jq .total_count <<<"$json") PRs with cozy in the title"
-            while IFS= read -r line; do found+=("$line"); done < <(jq -r \
-              '.items[] | select(.title | test("^cozy([ :]|$)"; "i")) | "\(.html_url) \(.title)"' <<<"$json")
+            prs=$(gh api --paginate "repos/$repo/pulls?state=open&per_page=100" -q '.[] | "\(.html_url) \(.title)"')
+            echo "$repo: $(wc -l <<<"$prs") open PRs"
+            test -n "$prs"
+            while IFS= read -r line; do found+=("$line"); done < <(grep -iE '^[^ ]+ cozy([ :]|$)' <<<"$prs" || true)
           done
           gh issue list -R "$GITHUB_REPOSITORY" --state all --limit 1000 --json title -q '.[].title' > seen.txt
           for item in "${found[@]}"; do
