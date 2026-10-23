@@ -27,7 +27,9 @@ jobs:
       - name: brew on PATH (Linuxbrew)
         if: runner.os == 'Linux'
         run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
-      - run: brew install cozy-creator/tap/cozy
+      - run: brew install --verbose cozy-creator/tap/cozy
+        env:
+          HOMEBREW_DEVELOPER: 1
       - run: |
           command -v cozy
           cozy --version
@@ -46,11 +48,12 @@ jobs:
             *) exit 1 ;;
           esac
 
+  # homebrew-core's targets: Intel macOS is Tier 3 and its rust bottle (1.98) is older than cozy's 1.99.
   core:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-15-intel, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -74,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-15-intel, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
