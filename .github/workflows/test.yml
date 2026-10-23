@@ -48,28 +48,37 @@ jobs:
             *) exit 1 ;;
           esac
 
-  # homebrew-core's targets: Intel macOS is Tier 3 and its rust bottle (1.98) is older than cozy's 1.99.
+  # The formula as homebrew-core would hold it (Formula/c/cozy.rb in a homebrew/core checkout, so
+  # core's own audits apply), on core's targets: Intel macOS is Tier 3 and its rust (1.98) is older
+  # than cozy's 1.99.
   core:
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      HOMEBREW_NO_INSTALL_FROM_API: 1
     steps:
       - uses: actions/checkout@v6
       - name: brew on PATH (Linuxbrew)
         if: runner.os == 'Linux'
         run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
-      - name: The core formula in a local tap
+      - name: The formula in homebrew/core
         run: |
-          brew tap-new --no-git cozy-creator/core-check
-          cp homebrew-core/cozy.rb "$(brew --repository cozy-creator/core-check)/Formula/"
-      - run: brew install --build-from-source cozy-creator/core-check/cozy
-      - run: brew test cozy-creator/core-check/cozy
-      - run: brew livecheck cozy-creator/core-check/cozy
+          brew tap --force homebrew/core
+          cp homebrew-core/cozy.rb "$(brew --repository homebrew/core)/Formula/c/cozy.rb"
+      - run: brew install --build-from-source cozy
+      - run: brew test cozy
+      - name: livecheck finds the newest cozy release
+        run: |
+          latest=$(brew livecheck --json cozy | jq -r '.[0].version.latest')
+          release=$(curl -fsS https://api.github.com/repos/cozy-creator/cozy-creator/releases/latest | jq -r .tag_name)
+          echo "livecheck $latest, newest release $release"
+          test "v$latest" = "$release"
       - name: brew audit --new --strict --online (notability is the only problem allowed)
         run: |
-          brew audit --new --strict --online cozy-creator/core-check/cozy 2>&1 | tee audit.txt || true
+          brew audit --new --strict --online cozy 2>&1 | tee audit.txt || true
           if grep -E '^\s+\* ' audit.txt | grep -v 'not notable enough'; then exit 1; fi
 
   head:
@@ -79,15 +88,17 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      HOMEBREW_NO_INSTALL_FROM_API: 1
     steps:
       - uses: actions/checkout@v6
       - name: brew on PATH (Linuxbrew)
         if: runner.os == 'Linux'
         run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
       - run: |
-          brew tap-new --no-git cozy-creator/core-check
-          cp homebrew-core/cozy.rb "$(brew --repository cozy-creator/core-check)/Formula/"
-          brew install --HEAD cozy-creator/core-check/cozy
+          brew tap --force homebrew/core
+          cp homebrew-core/cozy.rb "$(brew --repository homebrew/core)/Formula/c/cozy.rb"
+          brew install --HEAD cozy
           cozy --version
       - name: cozy update names brew upgrade and replaces nothing
         run: |

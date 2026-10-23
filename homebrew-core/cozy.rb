@@ -6,6 +6,12 @@ class Cozy < Formula
   license "MIT"
   head "https://github.com/cozy-creator/cozy-creator.git", branch: "master"
 
+  # The repository also tags TensorFS releases (tensorfs-v0.13.12).
+  livecheck do
+    url :stable
+    regex(/^v?(\d+(?:\.\d+)+)$/i)
+  end
+
   depends_on "rust" => :build
 
   def install
