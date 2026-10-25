@@ -1,37 +1,33 @@
 class Cozy < Formula
   desc "One binary: the cozy CLI, Calcifer, TensorD and TensorFS"
   homepage "https://github.com/cozy-creator/cozy-creator"
-  version "0.11.15"
+  version "0.12.0"
   if OS.mac?
+    odie "Intel Macs aren't supported; cozy needs Apple Silicon" if Hardware::CPU.intel?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.15/cozy-aarch64-apple-darwin.tar.gz"
-      sha256 "f083f0de4b51d245e0847b4b283e4eaadecf4292e15280c74afdf9401fb1f902"
-    end
-    if Hardware::CPU.intel?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.15/cozy-x86_64-apple-darwin.tar.gz"
-      sha256 "6f8df11f5b22ccac7dcaa0e0e9bb27ea4f6050d3e27a57eab004999d9f613cd6"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.12.0/cozy-aarch64-apple-darwin.tar.gz"
+      sha256 "e620a62c70ca027b65ba46331f43dc9242611601f80e10aea1e49aec2fee9560"
     end
   end
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.15/cozy-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "652f0eddf06ade9abfb419aa9eb5d485b33154ae896c27d0d080670036a6b014"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.12.0/cozy-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "c01210ca8927fc945d90b098966677bf53462d5abc36e11c8edf566e46734072"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.11.15/cozy-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "6005bbd69d029580159c3b8aa90fb7feb324bbad6bb11bdc73399af5f8a776f1"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.12.0/cozy-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "e8a82803f01054d8d1f53feadcc395ab7e77598101bc3f7724766f2b44a103bc"
     end
   end
   license "MIT"
 
   BINARY_ALIASES = {
-    "aarch64-apple-darwin":      {},
-    "aarch64-pc-windows-gnu":    {},
+    "aarch64-apple-darwin": {},
+    "aarch64-pc-windows-gnu": {},
     "aarch64-unknown-linux-gnu": {},
-    "x86_64-apple-darwin":       {},
-    "x86_64-pc-windows-gnu":     {},
-    "x86_64-unknown-linux-gnu":  {},
-  }.freeze
+    "x86_64-pc-windows-gnu": {},
+    "x86_64-unknown-linux-gnu": {}
+  }
 
   def target_triple
     cpu = Hardware::CPU.arm? ? "aarch64" : "x86_64"
@@ -50,9 +46,6 @@ class Cozy < Formula
 
   def install
     if OS.mac? && Hardware::CPU.arm?
-      bin.install "cozy"
-    end
-    if OS.mac? && Hardware::CPU.intel?
       bin.install "cozy"
     end
     if OS.linux? && Hardware::CPU.arm?
