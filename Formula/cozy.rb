@@ -1,22 +1,22 @@
 class Cozy < Formula
   desc "One binary: the cozy CLI, Calcifer, TensorD and TensorFS"
   homepage "https://github.com/cozy-creator/cozy-creator"
-  version "0.16.13"
+  version "0.18.7"
   if OS.mac?
     odie "Intel Macs aren't supported; cozy needs Apple Silicon" if Hardware::CPU.intel?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.16.13/cozy-aarch64-apple-darwin.tar.gz"
-      sha256 "e37543e78bcf57189787bba9b9f762df7b3c86427e8f9488b2bca5f442ab5176"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.18.7/cozy-aarch64-apple-darwin.tar.gz"
+      sha256 "baaf8480a25b36f568222f01a54e4d314f72f917b47df5f6a0126e37aca0818a"
     end
   end
   if OS.linux?
     if Hardware::CPU.arm?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.16.13/cozy-aarch64-unknown-linux-gnu.tar.gz"
-      sha256 "505fab0b45197d7ddb4728d50f1ac01d0ef3e7bd49507ae7487f426c228b0d28"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.18.7/cozy-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "8573a4088b1c8cae59507c1568f3511d9b034de3c763ed126b51708cd98c4d25"
     end
     if Hardware::CPU.intel?
-      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.16.13/cozy-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "422105fe19d4b7da855a4a549c4e97c8a7afc20d09e1636e70811225f790cd48"
+      url "https://github.com/cozy-creator/cozy-creator/releases/download/v0.18.7/cozy-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "d132605464d7f35a6258fcbaa7944383afdfc9d588c0a3cf4accf93f7746c8f8"
     end
   end
   license "MIT"
